@@ -1155,7 +1155,10 @@ async function connectFirebase() {
 
     let config;
     try { config = JSON.parse(raw); }
-    catch(e) { showFirebaseStatus('Invalid JSON — check the format.', false); return; }
+    catch(e) {
+        try { config = Function('return (' + raw + ')')(); }
+        catch(e2) { showFirebaseStatus('Invalid format — paste the config exactly as Firebase gives it.', false); return; }
+    }
 
     if (!config.apiKey || !config.projectId) {
         showFirebaseStatus('Config is missing required fields (apiKey, projectId).', false);
