@@ -63,9 +63,10 @@
         .workout-date { background:var(--card2); color:var(--text-dim); font-size:0.75rem; padding:6px 10px; border-radius:8px; }
         .next-up { background:var(--card2); color:var(--text-dim); font-size:0.72rem; padding:5px 10px; border-radius:6px; margin-left:auto; }
 
-        .exercise-card { background:var(--card); border-radius:12px; padding:14px; margin-bottom:10px; border:1px solid var(--border); transition:border-color 0.2s; }
+        .exercise-card { background:var(--card); border-radius:12px; padding:14px 14px 14px 18px; margin-bottom:10px; border:1px solid var(--border); transition:border-color 0.2s; position:relative; overflow:hidden; }
         .exercise-card.completed { border-color:var(--success); }
         .exercise-card.failed    { border-color:var(--fail); }
+        .ex-cat-strip { position:absolute; left:0; top:0; bottom:0; width:4px; }
         .exercise-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
         .exercise-name { font-size:1rem; font-weight:700; }
         .exercise-meta { font-size:0.7rem; color:var(--text-dim); margin-top:2px; }
@@ -687,6 +688,20 @@ const LIBRARY = {
 const LIB_BY_ID = {};
 Object.values(LIBRARY).flat().forEach(e => { LIB_BY_ID[e.id] = e; });
 
+// Category → color
+const CATEGORY_COLOR = {
+    'Chest':     '#e53935',
+    'Back':      '#1e88e5',
+    'Shoulders': '#ab47bc',
+    'Legs':      '#43a047',
+    'Arms':      '#00acc1',
+    'Core':      '#f9a825',
+};
+// Exercise id → category
+const EXERCISE_CATEGORY = {};
+Object.entries(LIBRARY).forEach(([cat, exs]) => exs.forEach(e => { EXERCISE_CATEGORY[e.id] = cat; }));
+function getExColor(id) { return CATEGORY_COLOR[EXERCISE_CATEGORY[id]] || '#555'; }
+
 // ═══════════════════════════════════════════════════════
 // PREMADE PROGRAMS
 // ═══════════════════════════════════════════════════════
@@ -904,6 +919,7 @@ function renderWorkout() {
             const muscles = buildMusclePills(ex.id);
 
             html += `<div class="exercise-card">
+                <div class="ex-cat-strip" style="background:${getExColor(ex.id)}"></div>
                 ${warn}
                 <div class="exercise-header">
                     <div>
@@ -950,6 +966,7 @@ function renderWorkout() {
             const muscles = buildMusclePills(ex.id);
 
             html += `<div class="exercise-card ${cls}">
+                <div class="ex-cat-strip" style="background:${getExColor(ex.id)}"></div>
                 <div class="exercise-header">
                     <div>
                         <div>
@@ -1400,9 +1417,12 @@ function renderExPicker(q) {
         const items=filtered.map(ex=>{
             const isSel=selected.has(ex.id);
             return `<div class="ex-item ${isSel?'selected':''}" onclick="toggleExPicker('${ex.id}')">
-                <div>
-                    <div class="ex-item-name">${ex.name}</div>
-                    <div class="ex-item-meta">${ex.sets}×${ex.reps} · +${ex.inc} lbs/session</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:8px;height:8px;border-radius:50%;background:${getExColor(ex.id)};flex-shrink:0"></div>
+                    <div>
+                        <div class="ex-item-name">${ex.name}</div>
+                        <div class="ex-item-meta">${ex.sets}×${ex.reps} · +${ex.inc} lbs/session</div>
+                    </div>
                 </div>
                 <div class="ex-item-check">${isSel?'✓':''}</div>
             </div>`;
