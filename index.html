@@ -405,21 +405,15 @@
 
     <!-- CLOUD SYNC -->
     <div class="card">
-        <div class="card-title">☁️ CLOUD SYNC — FIREBASE</div>
+        <div class="card-title">☁️ CLOUD SYNC</div>
         <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.6;margin-bottom:12px;">
-            Paste your Firebase project config below to sync your data across devices. Your data is stored under a unique Sync Code only you know.
+            Your data syncs automatically. Use your Sync Code to access your workouts on another device.
         </div>
-        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:4px;">Firebase Config (JSON)</div>
-        <textarea class="firebase-textarea" id="firebaseConfigInput" placeholder='{&#10;  "apiKey": "...",&#10;  "authDomain": "...",&#10;  "projectId": "...",&#10;  "storageBucket": "...",&#10;  "messagingSenderId": "...",&#10;  "appId": "..."&#10;}'></textarea>
-        <button class="btn mt-8" onclick="connectFirebase()">CONNECT FIREBASE</button>
-        <div class="firebase-status" id="firebaseStatus"></div>
-        <div id="syncCodeSection" style="display:none;margin-top:16px;">
-            <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:4px;">Your Sync Code <span style="color:#666">(use this on other devices)</span></div>
-            <div class="sync-code-box" id="syncCodeDisplay"></div>
-            <div style="display:flex;gap:8px;margin-top:8px;">
-                <button class="btn btn-outline btn-sm" onclick="copySyncCode()">Copy Code</button>
-                <button class="btn btn-outline btn-sm" onclick="changeSyncCode()">Change Code</button>
-            </div>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:4px;">Your Sync Code</div>
+        <div class="sync-code-box" id="syncCodeDisplay">Connecting…</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-outline btn-sm" onclick="copySyncCode()">Copy Code</button>
+            <button class="btn btn-outline btn-sm" onclick="changeSyncCode()">Use on Another Device</button>
         </div>
     </div>
 
@@ -540,6 +534,15 @@ function defaultState() {
     };
 }
 
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyC9VS3YdV4PZd_1LovFylS-sKnBT4WAiNU",
+    authDomain: "minmax-e0839.firebaseapp.com",
+    projectId: "minmax-e0839",
+    storageBucket: "minmax-e0839.firebasestorage.app",
+    messagingSenderId: "367024167543",
+    appId: "1:367024167543:web:365faf43354930b0bc8472",
+};
+
 let state       = loadState();
 let session     = null;
 let timerInterval = null;
@@ -569,18 +572,15 @@ function saveState() {
 // ═══════════════════════════════════════════════════════════════
 
 window.addEventListener('load', async () => {
-    // Try restoring Firebase from saved config
-    const savedConfig = localStorage.getItem('firebase_config');
-    if (savedConfig) {
-        try { await initFirebase(JSON.parse(savedConfig), true); } catch(e) {}
-    }
+    setSyncDot('syncing');
+    await initFirebase(FIREBASE_CONFIG, true);
 
-    // Load from Firestore if connected, otherwise use localStorage
     if (db && syncCode) {
-        setSyncDot('syncing');
         const cloudState = await loadFromFirebase();
         if (cloudState) { state = cloudState; localStorage.setItem('st5x5_v1', JSON.stringify(state)); }
         setSyncDot('synced');
+    } else {
+        setSyncDot('error');
     }
 
     renderWorkout();
@@ -997,12 +997,7 @@ function renderSettings() {
             <input type="number" id="w_${id}" value="${state.exercises[id].weight}" min="0" step="2.5">
         </div>`).join('');
 
-    // Restore Firebase UI state
-    const savedConfig = localStorage.getItem('firebase_config');
-    if (savedConfig) {
-        document.getElementById('firebaseConfigInput').value = savedConfig;
-        if (db) showFirebaseConnected();
-    }
+    document.getElementById('syncCodeDisplay').textContent = syncCode || 'Connecting…';
 }
 
 function saveSetting(k,v) { state.settings[k]=v; saveState(); }
@@ -1148,37 +1143,6 @@ function stripHtml(html) {
 // FIREBASE — cloud sync
 // ═══════════════════════════════════════════════════════════════
 
-async function connectFirebase() {
-    const raw = document.getElementById('firebaseConfigInput').value.trim();
-    const statusEl = document.getElementById('firebaseStatus');
-    if (!raw) { showFirebaseStatus('Paste your Firebase config first.', false); return; }
-
-    let config;
-    try { config = JSON.parse(raw); }
-    catch(e) {
-        try { config = Function('return (' + raw + ')')(); }
-        catch(e2) { showFirebaseStatus('Invalid format — paste the config exactly as Firebase gives it.', false); return; }
-    }
-
-    if (!config.apiKey || !config.projectId) {
-        showFirebaseStatus('Config is missing required fields (apiKey, projectId).', false);
-        return;
-    }
-
-    showFirebaseStatus('Connecting…', null);
-    const ok = await initFirebase(config, false);
-    if (ok) {
-        localStorage.setItem('firebase_config', raw);
-        showFirebaseConnected();
-        // Push current state up immediately
-        setSyncDot('syncing');
-        await syncToFirebase();
-        setSyncDot('synced');
-    } else {
-        showFirebaseStatus('Connection failed. Check your config and Firestore rules.', false);
-        setSyncDot('error');
-    }
-}
 
 async function initFirebase(config, silent) {
     return new Promise(resolve => {
@@ -1236,19 +1200,6 @@ async function loadFromFirebase() {
     return null;
 }
 
-function showFirebaseConnected() {
-    syncCode = localStorage.getItem('sync_code');
-    showFirebaseStatus('✓ Connected to Firebase!', true);
-    document.getElementById('syncCodeSection').style.display = 'block';
-    document.getElementById('syncCodeDisplay').textContent = syncCode;
-}
-
-function showFirebaseStatus(msg, ok) {
-    const el = document.getElementById('firebaseStatus');
-    el.textContent = msg;
-    el.className = 'firebase-status ' + (ok === true ? 'ok' : ok === false ? 'err' : '');
-    el.style.display = 'block';
-}
 
 function copySyncCode() {
     navigator.clipboard.writeText(syncCode||'').then(() => alert('Sync code copied!'));
@@ -1260,6 +1211,7 @@ function changeSyncCode() {
         syncCode = code.trim();
         localStorage.setItem('sync_code', syncCode);
         document.getElementById('syncCodeDisplay').textContent = syncCode;
+        renderSettings();
         // Load data from that code
         setSyncDot('syncing');
         loadFromFirebase().then(s => {
