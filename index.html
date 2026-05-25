@@ -86,6 +86,8 @@
         .plates { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
         .plate-chip { background:var(--card2); border:1px solid var(--border); border-radius:5px; padding:3px 7px; font-size:0.68rem; color:var(--text-dim); }
         .plate-chip span { color:var(--text); font-weight:600; }
+        .view-details-btn { width:100%; margin-top:10px; padding:10px; background:rgba(245,124,0,0.08); border:1px solid rgba(245,124,0,0.2); border-radius:8px; color:var(--accent); font-size:0.8rem; font-weight:600; cursor:pointer; letter-spacing:0.5px; transition:background 0.15s; }
+        .view-details-btn:hover { background:rgba(245,124,0,0.16); }
 
         /* ── History ── */
         .history-item { background:var(--card); border-radius:10px; padding:13px; margin-bottom:8px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
@@ -840,8 +842,8 @@ function renderWorkout() {
                 ${warn}
                 <div class="exercise-header">
                     <div>
-                        <div style="cursor:pointer;-webkit-tap-highlight-color:rgba(245,124,0,0.08)" onclick="openExerciseDetail('${ex.id}')">
-                            <div class="exercise-name">${def.name||ex.id}${isPR?'<span class="pr-badge">PR</span>':''} <span style="font-size:0.65em;color:var(--accent);opacity:0.6">›</span></div>
+                        <div>
+                            <div class="exercise-name">${def.name||ex.id}${isPR?'<span class="pr-badge">PR</span>':''}</div>
                             <div class="exercise-meta">${ex.sets||def.sets} × ${ex.reps||def.reps} reps &nbsp;·&nbsp; +${ex.inc||def.inc||5}${u}/session</div>
                         </div>
                     </div>
@@ -855,6 +857,7 @@ function renderWorkout() {
                     ${plates.map(p=>`<div class="plate-chip"><span>${p}${u}</span> × 2</div>`).join('')}
                     ${!plates.length?'<div class="plate-chip" style="color:var(--text-muted)">No plates needed</div>':''}
                 </div>
+                <button class="view-details-btn" onclick="openExerciseDetail('${ex.id}')">View Form, History &amp; Stats →</button>
             </div>`;
         });
 
@@ -884,8 +887,8 @@ function renderWorkout() {
             html += `<div class="exercise-card ${cls}">
                 <div class="exercise-header">
                     <div>
-                        <div style="cursor:pointer;-webkit-tap-highlight-color:rgba(245,124,0,0.08)" onclick="openExerciseDetail('${ex.id}')">
-                            <div class="exercise-name">${ex.name} <span style="font-size:0.65em;color:var(--accent);opacity:0.6">›</span></div>
+                        <div>
+                            <div class="exercise-name">${ex.name}</div>
                             <div class="exercise-meta">${ex.totalSets} × ${ex.reps} reps</div>
                         </div>
                     </div>
@@ -904,6 +907,7 @@ function renderWorkout() {
                     <div class="plate-chip">Bar <span>${state.settings.barWeight}${u}</span></div>
                     ${plates.map(p=>`<div class="plate-chip"><span>${p}${u}</span> × 2</div>`).join('')}
                 </div>
+                <button class="view-details-btn" onclick="openExerciseDetail('${ex.id}')">View Form, History &amp; Stats →</button>
             </div>`;
         });
 
