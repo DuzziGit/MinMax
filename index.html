@@ -369,6 +369,142 @@
         }
 
         html { scroll-behavior: smooth; }
+
+        /* ── Weight Editor Overlay ── */
+        .weight-edit-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 250;
+            background: rgba(0,0,0,0.65);
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .weight-edit-overlay.show { display: flex; }
+        .weight-edit-panel {
+            background: #1a1a1a;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 24px 24px 0 0;
+            padding: 12px 20px 36px;
+            max-height: 92vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .weight-edit-overlay.show .weight-edit-panel { transform: translateY(0); }
+        .drag-handle {
+            width: 40px; height: 4px;
+            background: #444; border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+        .weight-edit-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .weight-edit-back {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--card2);
+            color: var(--text);
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        .weight-edit-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+        }
+        .weight-edit-main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+            margin-bottom: 28px;
+        }
+        .weight-display-big {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .weight-display-big .w-num {
+            font-size: 6rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+        .weight-edit-unit {
+            font-size: 1.4rem;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+        .weight-adj-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+        .adj-btn {
+            padding: 14px 4px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.12s;
+            letter-spacing: 0.5px;
+        }
+        .adj-minus {
+            background: rgba(244,67,54,0.12);
+            color: #ef9a9a;
+            border-color: rgba(244,67,54,0.25);
+        }
+        .adj-minus:active { background: rgba(244,67,54,0.28); transform: scale(0.96); }
+        .adj-plus {
+            background: rgba(76,175,80,0.12);
+            color: #a5d6a7;
+            border-color: rgba(76,175,80,0.25);
+        }
+        .adj-plus:active { background: rgba(76,175,80,0.28); transform: scale(0.96); }
+        .barbell-viz {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80px;
+        }
+        .bar-sleeve { height: 10px; width: 36px; background: #999; border-radius: 5px; flex-shrink: 0; }
+        .bar-center  { height: 7px; flex: 1; max-width: 56px; background: #666; border-radius: 4px; }
+        .plates-left  { display: flex; flex-direction: row-reverse; align-items: center; gap: 3px; }
+        .plates-right { display: flex; flex-direction: row; align-items: center; gap: 3px; }
+        .plate-viz {
+            border-radius: 5px;
+            width: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.75);
+            writing-mode: vertical-rl;
+            flex-shrink: 0;
+        }
+        .clickable-weight { cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .clickable-weight .edit-icon { font-size: 0.72em; opacity: 0.45; }
+        .clickable-weight:hover { opacity: 0.78; }
+        .we-plates-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            font-weight: 600;
+            align-self: flex-start;
+        }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -505,6 +641,36 @@
     <button class="btn" onclick="closeComplete()" style="max-width:280px;margin-top:8px;">BACK TO HOME</button>
 </div>
 
+<!-- WEIGHT EDITOR OVERLAY -->
+<div class="weight-edit-overlay" id="weightEditOverlay">
+    <div class="weight-edit-panel">
+        <div class="drag-handle"></div>
+        <div class="weight-edit-header">
+            <button class="weight-edit-back" onclick="closeWeightEditor()">←</button>
+            <div class="weight-edit-title" id="weightEditTitle">SQUAT</div>
+            <div style="width:40px"></div>
+        </div>
+        <div class="weight-edit-main">
+            <div class="weight-display-big">
+                <span class="w-num" id="weightEditValue">135</span>
+                <span class="weight-edit-unit" id="weightEditUnit">lbs</span>
+            </div>
+            <div class="weight-adj-grid">
+                <button class="adj-btn adj-minus" onclick="adjustWeightEdit(-10)">− 10</button>
+                <button class="adj-btn adj-minus" onclick="adjustWeightEdit(-5)">− 5</button>
+                <button class="adj-btn adj-minus" onclick="adjustWeightEdit(-2.5)">− 2.5</button>
+                <button class="adj-btn adj-plus"  onclick="adjustWeightEdit(2.5)">+ 2.5</button>
+                <button class="adj-btn adj-plus"  onclick="adjustWeightEdit(5)">+ 5</button>
+                <button class="adj-btn adj-plus"  onclick="adjustWeightEdit(10)">+ 10</button>
+            </div>
+            <div class="barbell-viz" id="barbellViz"></div>
+            <div class="we-plates-label">Plates each side</div>
+            <div id="weightEditPlates" class="plates" style="width:100%"></div>
+        </div>
+        <button class="btn" onclick="saveWeightEdit()">SAVE WEIGHT</button>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
@@ -602,7 +768,7 @@ function renderWorkout() {
                         <div class="exercise-name">${ex.name}${isPR ? '<span class="pr-badge">PR</span>':''}</div>
                         <div class="exercise-meta">${ex.sets} × ${ex.reps} reps &nbsp;·&nbsp; +${ex.increment}${u}/session</div>
                     </div>
-                    <div class="exercise-weight">${exSt.weight} ${u}</div>
+                    <div class="exercise-weight clickable-weight" onclick="openWeightEditor('${ex.id}','preview')">${exSt.weight} ${u}<span class="edit-icon">✎</span></div>
                 </div>
                 <div class="plates">
                     <div class="plate-chip">Bar <span>${state.settings.barWeight}${u}</span></div>
@@ -643,7 +809,7 @@ function renderWorkout() {
                         <div class="exercise-name">${ex.name}</div>
                         <div class="exercise-meta">${ex.totalSets} × ${ex.reps} reps</div>
                     </div>
-                    <div class="exercise-weight">${ex.weight} ${u}</div>
+                    <div class="exercise-weight clickable-weight" onclick="openWeightEditor('${ex.id}','session',${ei})">${ex.weight} ${u}<span class="edit-icon">✎</span></div>
                 </div>
                 <div class="sets-row">
                     ${ex.sets.map((s, si) => {
@@ -1003,6 +1169,88 @@ function confirmReset() {
             updateBadge();
         }
     }
+}
+
+// ── WEIGHT EDITOR ─────────────────────────────────────────────────────────────
+
+let weightEdit = { exId: null, context: null, sessionIdx: null, weight: 0 };
+
+const PLATE_COLORS   = { 45:'#1565c0', 35:'#f9a825', 25:'#2e7d32', 10:'#bdbdbd', 5:'#1976d2', 2.5:'#c62828' };
+const PLATE_HEIGHTS  = { 45:64, 35:56, 25:48, 10:36, 5:26, 2.5:18 };
+
+function openWeightEditor(exId, context, sessionIdx) {
+    const w = (context === 'session' && session)
+        ? session.exercises[sessionIdx].weight
+        : state.exercises[exId].weight;
+    weightEdit = { exId, context, sessionIdx: sessionIdx ?? null, weight: w };
+    document.getElementById('weightEditTitle').textContent = EX_NAMES[exId].toUpperCase();
+    document.getElementById('weightEditUnit').textContent  = state.settings.units;
+    updateWeightEditDisplay();
+    document.getElementById('weightEditOverlay').classList.add('show');
+}
+
+function closeWeightEditor() {
+    document.getElementById('weightEditOverlay').classList.remove('show');
+}
+
+function adjustWeightEdit(delta) {
+    weightEdit.weight = Math.max(0, snap(weightEdit.weight + delta));
+    updateWeightEditDisplay();
+}
+
+function updateWeightEditDisplay() {
+    const w = weightEdit.weight;
+    const u = state.settings.units;
+    document.getElementById('weightEditValue').textContent = w;
+
+    const plates = calcPlates(w, state.settings.barWeight);
+    document.getElementById('weightEditPlates').innerHTML =
+        `<div class="plate-chip">Bar <span>${state.settings.barWeight}${u}</span></div>` +
+        (plates.length
+            ? plates.map(p => `<div class="plate-chip"><span>${p}${u}</span> × 2</div>`).join('')
+            : '<div class="plate-chip" style="color:var(--text-dim)">No plates needed</div>');
+
+    renderBarbellViz(plates);
+}
+
+function renderBarbellViz(plates) {
+    const viz = document.getElementById('barbellViz');
+    viz.innerHTML = '';
+
+    const makeStack = (reverse) => {
+        const el = document.createElement('div');
+        el.className = reverse ? 'plates-left' : 'plates-right';
+        plates.forEach(p => {
+            const d = document.createElement('div');
+            d.className = 'plate-viz';
+            d.style.height = (PLATE_HEIGHTS[p] || 28) + 'px';
+            d.style.background = PLATE_COLORS[p] || '#555';
+            d.textContent = p;
+            el.appendChild(d);
+        });
+        return el;
+    };
+
+    const slL = document.createElement('div'); slL.className = 'bar-sleeve';
+    const ctr = document.createElement('div'); ctr.className = 'bar-center';
+    const slR = document.createElement('div'); slR.className = 'bar-sleeve';
+
+    viz.appendChild(makeStack(true));
+    viz.appendChild(slL);
+    viz.appendChild(ctr);
+    viz.appendChild(slR);
+    viz.appendChild(makeStack(false));
+}
+
+function saveWeightEdit() {
+    const w = weightEdit.weight;
+    if (weightEdit.context === 'session' && session && weightEdit.sessionIdx !== null) {
+        session.exercises[weightEdit.sessionIdx].weight = w;
+    }
+    state.exercises[weightEdit.exId].weight = w;
+    saveState();
+    closeWeightEditor();
+    renderWorkout();
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
