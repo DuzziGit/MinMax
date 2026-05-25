@@ -293,6 +293,45 @@
         .empty-icon { font-size:2.8rem; margin-bottom:10px; }
         .deload-warn { background:rgba(244,67,54,0.09); border:1px solid var(--fail); border-radius:8px; padding:9px 13px; font-size:0.76rem; color:#ef9a9a; margin-bottom:10px; }
         html { scroll-behavior:smooth; }
+
+        /* ── Exercise Detail Page ── */
+        .ex-detail-overlay {
+            display:none; position:fixed; inset:0; z-index:270;
+            background:var(--bg); overflow-y:auto;
+        }
+        .ex-detail-overlay.show { display:block; animation:slideInRight 0.25s cubic-bezier(0.32,0.72,0,1); }
+        @keyframes slideInRight { from{transform:translateX(30px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+        .ex-detail-header {
+            background:var(--card); padding:13px 16px;
+            display:flex; align-items:center; gap:12px;
+            border-bottom:1px solid var(--border);
+            position:sticky; top:0; z-index:10;
+        }
+        .ex-detail-header h2 { font-size:1.05rem; font-weight:700; flex:1; }
+        .ex-detail-body { padding:14px; }
+
+        .ex-detail-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+        .ex-detail-stat  { background:var(--card2); border-radius:10px; padding:12px 8px; text-align:center; }
+        .ex-detail-stat-val { font-size:1.2rem; font-weight:700; color:var(--accent); }
+        .ex-detail-stat-lbl { font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+
+        .form-section { background:var(--card); border-radius:12px; padding:14px; margin-bottom:12px; border:1px solid var(--border); }
+        .form-section-title { font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); font-weight:600; margin-bottom:8px; }
+        .form-text { font-size:0.82rem; color:var(--text-dim); line-height:1.65; }
+        .form-tips-list { list-style:none; padding:0; }
+        .form-tips-list li { font-size:0.8rem; color:var(--text-dim); padding:5px 0; border-bottom:1px solid var(--border); line-height:1.5; }
+        .form-tips-list li:last-child { border-bottom:none; }
+        .form-tips-list li::before { content:'→ '; color:var(--accent); font-weight:700; }
+
+        .ex-history-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+        .ex-history-item:last-child { border-bottom:none; }
+        .ex-history-date { font-size:0.75rem; color:var(--text-dim); }
+        .ex-history-weight { font-size:0.9rem; font-weight:700; color:var(--accent); }
+        .ex-history-sets { font-size:0.72rem; color:var(--text-dim); margin-top:2px; }
+        .ex-history-icon { font-size:1.1rem; }
+
+        .ex-detail-chart-wrap { position:relative; height:160px; margin:8px 0 4px; }
         ::-webkit-scrollbar { width:3px; }
         ::-webkit-scrollbar-track { background:var(--bg); }
         ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
@@ -801,7 +840,7 @@ function renderWorkout() {
                 ${warn}
                 <div class="exercise-header">
                     <div>
-                        <div class="exercise-name">${def.name||ex.id}${isPR?'<span class="pr-badge">PR</span>':''}</div>
+                        <div class="exercise-name" style="cursor:pointer" onclick="openExerciseDetail('${ex.id}')">${def.name||ex.id}${isPR?'<span class="pr-badge">PR</span>':''} <span style="font-size:0.65em;opacity:0.35;vertical-align:middle">›</span></div>
                         <div class="exercise-meta">${ex.sets||def.sets} × ${ex.reps||def.reps} reps &nbsp;·&nbsp; +${ex.inc||def.inc||5}${u}/session</div>
                     </div>
                     <div class="exercise-weight" onclick="openWeightEditor('${ex.id}','preview')">
@@ -843,7 +882,7 @@ function renderWorkout() {
             html += `<div class="exercise-card ${cls}">
                 <div class="exercise-header">
                     <div>
-                        <div class="exercise-name">${ex.name}</div>
+                        <div class="exercise-name" style="cursor:pointer" onclick="openExerciseDetail('${ex.id}')">${ex.name} <span style="font-size:0.65em;opacity:0.35;vertical-align:middle">›</span></div>
                         <div class="exercise-meta">${ex.totalSets} × ${ex.reps} reps</div>
                     </div>
                     <div class="exercise-weight" onclick="openWeightEditor('${ex.id}','session',${ei})">
@@ -1403,6 +1442,162 @@ function saveWeightEdit(){
 }
 
 // ═══════════════════════════════════════════════════════
+// EXERCISE DETAIL
+// ═══════════════════════════════════════════════════════
+
+const FORM_TIPS = {
+    squat:        ['Stand with feet shoulder-width apart, toes slightly out','Keep chest up and core tight throughout the lift','Break at hips and knees simultaneously','Drive knees out over toes on the way down','Push through the whole foot to stand back up','Hit parallel or below for full range of motion'],
+    bench:        ['Grip slightly wider than shoulder-width','Retract shoulder blades and arch your back slightly','Lower the bar to your mid-chest with control','Keep elbows at ~75° angle, not fully flared','Press the bar in a slight arc back toward the rack','Keep feet flat and glutes on the bench'],
+    row:          ['Hinge at hips until torso is near parallel to floor','Keep your back flat — no rounding','Pull the bar into your lower stomach','Lead with your elbows, not your hands','Squeeze shoulder blades together at the top','Control the weight on the way down'],
+    ohp:          ['Stand with feet hip-width apart, core braced','Grip just outside shoulder width','Push the bar directly overhead — not forward','Move your head back slightly as the bar passes','Lock out fully at the top, arms straight','Lower to chin/upper chest under control'],
+    deadlift:     ['Bar over mid-foot, about 1 inch from shins','Hip-width stance, grip just outside legs','Big breath, brace core before every rep','Hips and shoulders rise at the same rate','Drive the floor away — don\'t think "pull"','Lock hips and shoulders out at the top'],
+    incline_bench:['Set bench to 30–45°, higher hits shoulders more','Same grip and shoulder blade setup as flat bench','Lower to upper chest, not neck','Elbows slightly more tucked than flat bench','Full range of motion for best chest activation'],
+    rdl:          ['Keep a soft bend in the knees throughout','Hinge at the hips, pushing them back','Bar stays close to your legs the whole way down','Feel the hamstring stretch — stop before back rounds','Drive hips forward to stand, squeeze glutes at top'],
+    pullup:       ['Dead hang to start each rep for full range','Initiate by depressing the shoulder blades','Pull elbows toward your hips, not backward','Chin clears the bar at the top','Control the descent — no kipping unless trained'],
+    lat_pulldown: ['Slight lean back, chest up toward the bar','Pull bar to upper chest, not behind neck','Lead with elbows driving toward your hips','Squeeze lats at the bottom position','Slow, controlled return to full stretch'],
+    bb_curl:      ['Keep elbows pinned to your sides','Don\'t swing your body to help the weight up','Full extension at the bottom for stretch','Squeeze the bicep hard at the top','Lower with control — 2-3 seconds down'],
+};
+
+let exDetailChart = null;
+
+function openExerciseDetail(exId) {
+    const name  = LIB_BY_ID[exId]?.name || exId;
+    const exSt  = state.exercises[exId] || { weight:0, failures:0, pr:0 };
+    const u     = state.settings.units;
+    const wger  = wgerData[exId];
+
+    document.getElementById('exDetailName').textContent = name;
+
+    // Muscle pills in header
+    const muscleEl = document.getElementById('exDetailMuscles');
+    if (wger?.muscles?.length) {
+        muscleEl.innerHTML =
+            wger.muscles.map(m=>`<span class="muscle-pill">${m}</span>`).join('') +
+            (wger.muscles_secondary||[]).map(m=>`<span class="muscle-pill secondary">${m}</span>`).join('');
+    } else { muscleEl.innerHTML = ''; }
+
+    // Gather history for this exercise
+    const history = state.history
+        .filter(h => h.exercises.some(e => e.id === exId))
+        .map(h => ({ entry: h, ex: h.exercises.find(e => e.id === exId) }));
+
+    // Stats
+    const totalSessions = history.length;
+    const totalVolume   = history.reduce((s, {ex}) => s + ex.sets.filter(x=>x===true).length * (ex.reps||5) * ex.weight, 0);
+    const pr            = exSt.pr || 0;
+
+    // Form tips
+    const tips    = FORM_TIPS[exId] || [];
+    const desc    = wger?.description || '';
+    const formHtml = tips.length
+        ? `<ul class="form-tips-list">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`
+        : desc
+            ? `<p class="form-text">${desc}</p>`
+            : `<p class="form-text" style="color:var(--text-muted)">No form tips available for this exercise yet.</p>`;
+
+    // Chart data
+    const chartPts = [...history].reverse().map(({entry, ex}) => ({
+        label:  fmtDateShort(new Date(entry.date)),
+        weight: ex.weight,
+        ok:     ex.completed,
+    }));
+
+    // History rows
+    const histRows = history.length ? history.map(({entry, ex}) => {
+        const done  = ex.sets.filter(s=>s===true).length;
+        const total = ex.sets.length;
+        const icon  = ex.completed ? '✅' : done > 0 ? '⚠️' : '❌';
+        return `<div class="ex-history-item">
+            <div>
+                <div class="ex-history-date">${fmtDateShort(new Date(entry.date))} · ${entry.dayName||'Workout'}</div>
+                <div class="ex-history-sets">${done}/${total} sets completed</div>
+            </div>
+            <div style="text-align:right;display:flex;align-items:center;gap:10px;">
+                <div class="ex-history-weight">${ex.weight} ${u}</div>
+                <div class="ex-history-icon">${icon}</div>
+            </div>
+        </div>`;
+    }).join('')
+    : `<div style="color:var(--text-muted);font-size:.8rem;padding:12px 0;">No sessions logged yet.</div>`;
+
+    document.getElementById('exDetailBody').innerHTML = `
+        <!-- Stats -->
+        <div class="ex-detail-stats">
+            <div class="ex-detail-stat">
+                <div class="ex-detail-stat-val">${pr}${u}</div>
+                <div class="ex-detail-stat-lbl">All-Time PR</div>
+            </div>
+            <div class="ex-detail-stat">
+                <div class="ex-detail-stat-val">${(totalVolume/1000).toFixed(1)}k</div>
+                <div class="ex-detail-stat-lbl">Total Volume</div>
+            </div>
+            <div class="ex-detail-stat">
+                <div class="ex-detail-stat-val">${totalSessions}</div>
+                <div class="ex-detail-stat-lbl">Sessions</div>
+            </div>
+        </div>
+
+        <!-- Weight progress chart -->
+        ${chartPts.length >= 2 ? `
+        <div class="form-section">
+            <div class="form-section-title">Weight Progression</div>
+            <div class="ex-detail-chart-wrap"><canvas id="exDetailChartCanvas"></canvas></div>
+        </div>` : ''}
+
+        <!-- Form tips -->
+        <div class="form-section">
+            <div class="form-section-title">Form Tips</div>
+            ${formHtml}
+        </div>
+
+        <!-- History -->
+        <div class="form-section">
+            <div class="form-section-title">Session History</div>
+            ${histRows}
+        </div>
+    `;
+
+    // Draw chart after DOM is ready
+    if (chartPts.length >= 2) {
+        requestAnimationFrame(() => {
+            if (exDetailChart) { exDetailChart.destroy(); exDetailChart = null; }
+            const ctx = document.getElementById('exDetailChartCanvas')?.getContext('2d');
+            if (!ctx) return;
+            exDetailChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartPts.map(p => p.label),
+                    datasets: [{
+                        data:  chartPts.map(p => p.weight),
+                        borderColor: '#f57c00',
+                        backgroundColor: 'rgba(245,124,0,0.08)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: chartPts.map(p => p.ok ? '#f57c00' : '#f44336'),
+                        pointRadius: 5, tension: 0.35, fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.raw}${u}`}} },
+                    scales: {
+                        x: { ticks:{color:'#666',font:{size:10},maxRotation:40}, grid:{color:'#222'} },
+                        y: { ticks:{color:'#666',font:{size:10}}, grid:{color:'#222'} }
+                    }
+                }
+            });
+        });
+    }
+
+    document.getElementById('exDetailOverlay').classList.add('show');
+    document.getElementById('exDetailOverlay').scrollTop = 0;
+}
+
+function closeExerciseDetail() {
+    document.getElementById('exDetailOverlay').classList.remove('show');
+    if (exDetailChart) { exDetailChart.destroy(); exDetailChart = null; }
+}
+
+// ═══════════════════════════════════════════════════════
 // WGER
 // ═══════════════════════════════════════════════════════
 
@@ -1453,5 +1648,14 @@ function fmtDate(d){return d.toLocaleDateString('en-US',{weekday:'long',month:'s
 function fmtDateShort(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function updateBadge(){const n=state.history.length;document.getElementById('streakBadge').textContent=`${n} SESSION${n!==1?'S':''}`;}
 </script>
+<!-- EXERCISE DETAIL PAGE -->
+<div class="ex-detail-overlay" id="exDetailOverlay">
+    <div class="ex-detail-header">
+        <button class="back-btn" onclick="closeExerciseDetail()">←</button>
+        <h2 id="exDetailName">Bench Press</h2>
+        <div id="exDetailMuscles" class="muscle-pills" style="flex-wrap:wrap;gap:4px;"></div>
+    </div>
+    <div class="ex-detail-body" id="exDetailBody"></div>
+</div>
 </body>
 </html>
