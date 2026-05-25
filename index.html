@@ -290,6 +290,45 @@
         .complete-stat-val { font-size:1.4rem; font-weight:700; color:var(--accent); }
         .complete-stat-lbl { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
 
+        /* ── Calendar ── */
+        .cal-nav-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+        .cal-month-title { font-size:1rem; font-weight:700; }
+        .cal-arrow { background:var(--card2); border:1px solid var(--border); color:var(--text); width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; }
+        .cal-dow-row { display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:4px; }
+        .cal-dow { text-align:center; font-size:0.58rem; color:var(--text-dim); font-weight:700; text-transform:uppercase; padding:4px 0; }
+        .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+        .cal-day { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:8px; position:relative; cursor:default; }
+        .cal-day.clickable { cursor:pointer; }
+        .cal-day.clickable:active { background:var(--card2); }
+        .cal-day.today { background:rgba(245,124,0,0.12); }
+        .cal-day.today .cal-day-num { color:var(--accent); font-weight:700; }
+        .cal-day.future .cal-day-num { color:var(--text-muted); }
+        .cal-day-num { font-size:0.75rem; font-weight:500; line-height:1; }
+        .cal-dot { width:7px; height:7px; border-radius:50%; margin-top:3px; }
+        .cal-empty { aspect-ratio:1; }
+
+        .cal-legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+        .cal-legend-item { display:flex; align-items:center; gap:5px; font-size:0.68rem; color:var(--text-dim); }
+        .cal-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+        .cal-month-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+
+        .day-detail-card { background:var(--card2); border-radius:12px; padding:14px; margin-top:12px; border:1px solid var(--border); animation:fadeIn 0.18s ease; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .day-detail-date { font-size:0.72rem; color:var(--text-dim); margin-bottom:4px; }
+        .day-detail-name { font-size:0.95rem; font-weight:700; margin-bottom:10px; }
+        .day-detail-ex-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.8rem; }
+        .day-detail-ex-row:last-child { border-bottom:none; }
+        .day-detail-ex-sets { font-size:0.72rem; color:var(--text-dim); }
+
+        .spacing-bar { background:var(--card); border-radius:10px; padding:12px 14px; margin-top:10px; border:1px solid var(--border); }
+        .spacing-row { display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; margin-bottom:6px; }
+        .spacing-row:last-child { margin-bottom:0; }
+        .spacing-label { color:var(--text-dim); }
+        .spacing-ok   { color:var(--success); font-weight:600; }
+        .spacing-warn { color:#ffb74d; font-weight:600; }
+        .spacing-rest { color:var(--fail); font-weight:600; }
+
         /* ── Misc ── */
         .empty { text-align:center; padding:40px 20px; color:var(--text-dim); }
         .empty-icon { font-size:2.8rem; margin-bottom:10px; }
@@ -368,6 +407,27 @@
         <div class="chart-container"><canvas id="progressChart"></canvas></div>
         <div id="progressStats"></div>
     </div>
+</div>
+
+<!-- CALENDAR TAB -->
+<div class="tab" id="tab-calendar">
+    <div class="card">
+        <div class="cal-nav-row">
+            <button class="cal-arrow" onclick="prevCalMonth()">‹</button>
+            <div class="cal-month-title" id="calMonthTitle"></div>
+            <button class="cal-arrow" onclick="nextCalMonth()">›</button>
+        </div>
+        <div class="cal-dow-row">
+            <div class="cal-dow">S</div><div class="cal-dow">M</div><div class="cal-dow">T</div>
+            <div class="cal-dow">W</div><div class="cal-dow">T</div><div class="cal-dow">F</div>
+            <div class="cal-dow">S</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend" id="calLegend"></div>
+    </div>
+    <div class="cal-month-stats" id="calMonthStats"></div>
+    <div id="calDayDetail"></div>
+    <div class="spacing-bar" id="calSpacing" style="display:none"></div>
 </div>
 
 <!-- PROGRAMS TAB -->
@@ -475,6 +535,10 @@
     <button class="nav-btn" onclick="showTab('history',this)">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
         History
+    </button>
+    <button class="nav-btn" onclick="showTab('calendar',this)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+        Calendar
     </button>
     <button class="nav-btn" onclick="showTab('progress',this)">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
@@ -811,6 +875,7 @@ function showTab(name, btn) {
     if (name === 'settings') renderSettings();
     if (name === 'workout')  renderWorkout();
     if (name === 'programs') renderPrograms();
+    if (name === 'calendar') renderCalendar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1655,6 +1720,155 @@ function changeSyncCode(){
 function fmtDate(d){return d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});}
 function fmtDateShort(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function updateBadge(){const n=state.history.length;document.getElementById('streakBadge').textContent=`${n} SESSION${n!==1?'S':''}`;}
+
+// ═══════════════════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════════════════
+
+let calendarDate = new Date();
+
+function getDayColor(entry) {
+    const k = (entry.dayKey || '').toLowerCase();
+    const n = (entry.dayName || '').toLowerCase();
+    if (k === 'push' || n.includes('push')) return '#ef5350';
+    if (k === 'pull' || n.includes('pull')) return '#42a5f5';
+    if (k === 'legs' || n.includes('legs')) return '#66bb6a';
+    if (k === 'b') return '#ab47bc';
+    return '#f57c00';
+}
+
+function prevCalMonth() {
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
+    renderCalendar();
+}
+function nextCalMonth() {
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
+    renderCalendar();
+}
+
+function toDateKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function renderCalendar() {
+    const year  = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    document.getElementById('calMonthTitle').textContent =
+        new Date(year, month, 1).toLocaleDateString('en-US', {month:'long', year:'numeric'});
+
+    // Build workout map keyed by date string
+    const wMap = {};
+    state.history.forEach(e => { wMap[toDateKey(new Date(e.date))] = e; });
+
+    const firstDow  = new Date(year, month, 1).getDay();
+    const daysInMon = new Date(year, month + 1, 0).getDate();
+    const todayKey  = toDateKey(new Date());
+    const todayFull = new Date(); todayFull.setHours(0,0,0,0);
+
+    let html = '<div class="cal-empty"></div>'.repeat(firstDow);
+    for (let d = 1; d <= daysInMon; d++) {
+        const key   = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const entry = wMap[key];
+        const isFut = new Date(year, month, d) > todayFull;
+        let cls = 'cal-day';
+        if (key === todayKey) cls += ' today';
+        if (isFut) cls += ' future';
+        if (entry) cls += ' clickable';
+        const dot = entry ? `<div class="cal-dot" style="background:${getDayColor(entry)}"></div>` : '';
+        const click = entry ? `onclick="showDayDetail('${key}')"` : '';
+        html += `<div class="${cls}" ${click}><div class="cal-day-num">${d}</div>${dot}</div>`;
+    }
+    document.getElementById('calGrid').innerHTML = html;
+
+    // Legend for days that appear this month
+    const typesInMonth = new Set();
+    state.history.forEach(e => {
+        const d = new Date(e.date);
+        if (d.getFullYear() === year && d.getMonth() === month) typesInMonth.add((e.dayKey||'').toLowerCase());
+    });
+    const LEGEND_MAP = [
+        {keys:['push'],  color:'#ef5350', label:'Push'},
+        {keys:['pull'],  color:'#42a5f5', label:'Pull'},
+        {keys:['legs'],  color:'#66bb6a', label:'Legs'},
+        {keys:['b'],     color:'#ab47bc', label:'Workout B'},
+        {keys:['a',''], color:'#f57c00', label:'Workout A'},
+    ];
+    const legend = LEGEND_MAP.filter(l => l.keys.some(k => typesInMonth.has(k)));
+    if (!legend.length && typesInMonth.size) legend.push({color:'#f57c00', label:'Workout'});
+    document.getElementById('calLegend').innerHTML = legend.map(l =>
+        `<div class="cal-legend-item"><div class="cal-legend-dot" style="background:${l.color}"></div>${l.label}</div>`
+    ).join('');
+
+    // Month stats
+    const monthSessions = state.history.filter(e => {
+        const d = new Date(e.date);
+        return d.getFullYear() === year && d.getMonth() === month;
+    });
+    const sorted = [...state.history].sort((a,b) => new Date(a.date)-new Date(b.date));
+    let avgGapStr = '—';
+    if (sorted.length >= 2) {
+        const gaps = [];
+        for (let i = 1; i < sorted.length; i++)
+            gaps.push((new Date(sorted[i].date)-new Date(sorted[i-1].date))/864e5);
+        avgGapStr = (gaps.reduce((a,b)=>a+b,0)/gaps.length).toFixed(1)+'d';
+    }
+    let lastAgo = '—';
+    if (state.history.length) {
+        const diff = Math.floor((new Date()-new Date(sorted[sorted.length-1].date))/864e5);
+        lastAgo = diff===0 ? 'Today' : diff===1 ? '1d ago' : `${diff}d ago`;
+    }
+    document.getElementById('calMonthStats').innerHTML =
+        `<div class="stat-card"><div class="stat-value">${monthSessions.length}</div><div class="stat-label">This Month</div></div>
+         <div class="stat-card"><div class="stat-value">${avgGapStr}</div><div class="stat-label">Avg Gap</div></div>
+         <div class="stat-card"><div class="stat-value">${lastAgo}</div><div class="stat-label">Last Workout</div></div>`;
+
+    document.getElementById('calDayDetail').innerHTML = '';
+    renderSpacingBar(sorted);
+}
+
+function showDayDetail(dateKey) {
+    const entry = state.history.find(e => toDateKey(new Date(e.date)) === dateKey);
+    if (!entry) return;
+    const d = new Date(entry.date);
+    const label = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    const dur   = entry.duration ? ` · ${Math.round(entry.duration/60)} min` : '';
+    const color = getDayColor(entry);
+    const rows  = (entry.exercises||[]).map(ex => {
+        const done = (ex.completed||[]).filter(Boolean).length;
+        return `<div class="day-detail-ex-row">
+            <span>${ex.name||ex.id}</span>
+            <span class="day-detail-ex-sets">${done}/${ex.sets||0} sets · ${ex.weight}${state.settings.units}</span>
+        </div>`;
+    }).join('') || '<div style="font-size:0.78rem;color:var(--text-dim)">No exercise data</div>';
+    document.getElementById('calDayDetail').innerHTML =
+        `<div class="day-detail-card">
+            <div class="day-detail-date">${label}${dur}</div>
+            <div class="day-detail-name" style="color:${color}">${entry.dayName||'Workout'}</div>
+            ${rows}
+        </div>`;
+}
+
+function renderSpacingBar(sorted) {
+    const el = document.getElementById('calSpacing');
+    if (sorted.length < 2) { el.style.display='none'; return; }
+    el.style.display = '';
+
+    const gaps = [];
+    for (let i = 1; i < sorted.length; i++)
+        gaps.push((new Date(sorted[i].date)-new Date(sorted[i-1].date))/864e5);
+    const avg = gaps.reduce((a,b)=>a+b,0)/gaps.length;
+    const daysSince = Math.floor((new Date()-new Date(sorted[sorted.length-1].date))/864e5);
+
+    const freqCls = avg < 1.5 ? 'spacing-warn' : avg <= 3.5 ? 'spacing-ok' : 'spacing-warn';
+    const freqTxt = avg < 1.5 ? 'May be too frequent' : avg <= 3.5 ? 'Optimal frequency' : 'Could train more often';
+    const restCls = daysSince <= 2 ? 'spacing-ok' : daysSince <= 4 ? 'spacing-warn' : 'spacing-rest';
+    const restTxt = daysSince === 0 ? 'Trained today' : daysSince === 1 ? '1 day ago — ready' : daysSince <= 2 ? `${daysSince} days ago — ready` : daysSince <= 4 ? `${daysSince} days ago — train soon` : `${daysSince} days ago — get back in!`;
+
+    el.innerHTML =
+        `<div class="spacing-row"><span class="spacing-label">Avg workout gap</span><span class="${freqCls}">${avg.toFixed(1)} days · ${freqTxt}</span></div>
+         <div class="spacing-row"><span class="spacing-label">Last session</span><span class="${restCls}">${restTxt}</span></div>
+         <div class="spacing-row"><span class="spacing-label">Total sessions</span><span style="font-weight:600;color:var(--text)">${sorted.length}</span></div>`;
+}
 </script>
 <!-- EXERCISE DETAIL PAGE -->
 <div class="ex-detail-overlay" id="exDetailOverlay">
